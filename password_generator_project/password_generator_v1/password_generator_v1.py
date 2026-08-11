@@ -131,9 +131,9 @@ def password(length, num=False, sym=False):
             
     # Thêm chữ cái thường cho số lượng còn lại
     remaining = length - ranDig - ranPunct
-    char_souce = lower if strength == 'weak' else letter
+    char_source = lower if strength == 'Weak' else letter
     for _ in range(remaining):
-        pwd += random.choice(letter)
+        pwd += random.choice(char_source)
     
 
     # Tráo đổi vị trí ký tự
