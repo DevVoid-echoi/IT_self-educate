@@ -1,0 +1,178 @@
+import socket
+import threading
+import argparse
+import json
+import time
+from queue import Queue
+from tqdm import tqdm
+
+COMMON_SERVICES = {
+    21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
+    80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS", 3306: "MySQL",
+    3389: "RDP", 5432: "PostgreSQL", 8080: "HTTP-Proxy"
+}
+
+class PortScanner:
+    def __init__(self, target_host, ports, num_threads=100, timeout=1.0):
+        self.target_host = target_host
+        self.target_ip = self._resolve_target(target_host)
+        self.ports = ports
+        self.num_threads = num_threads
+        self.timeout = timeout
+        self.queue = Queue()
+        self.open_ports = []
+        self.print_lock = threading.Lock()
+        self.progress_bar = None
+
+    def _resolve_target(self, host):
+        "Chuyển đổi Domain thành IP và kiểm tra tính hợp lệ"
+        try:
+            return socket.gethostbyname(host) # Gọi DNS để lấy IP từ hostname
+        except socket.gaierror: # Bắt lỗi nếu sai IP hoặc tên miền không tồn tại
+            print(f"[!] Lỗi: Không thể phân giải địa chỉ '{host}'. Hãy kiểm tra lại IP/Domain.")
+            exit(1) # Dừng chương trình
+    
+    def _grab_banner(self, sock):
+        "Đọc banner từ dịch vụ để xác định loại service"
+        try:
+            # Gửi truy vấn HTTP cơ bản để kích thích server phản hồi
+            sock.send(b"HEAD / HTTP/1.1\r\nHost: target\r\n\r\n")
+            # Nhận tối đa 1024 bytes dữ liệu trả về và giải mã utf-8
+            banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()
+            # Lấy dòng đầu tiên của banner phản hồi
+            return banner.split('\n')[0] if banner else "Unknown Service"
+        except:
+            return "Unknown Service"
+
+    def _scan_port(self, port):
+        "Thực hiện kết nối thử nghiệm đến cổng"
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Tạo socket IPv4, TCP
+            sock.settimeout(self.timeout) # Thời gian chờ tối đa
+            result = sock.connect_ex((self.target_ip, port)) # Thử kết nối (Return 0 nếu thành công)
+
+            if result == 0:
+                service_name = COMMON_SERVICES.get(port, "Unknown") # Tra cứu tên dịch vụ
+                banner = self._grab_banner(sock) # Thử đọc banner
+                sock.close()
+                return True, service_name, banner
+        except (socket.error, OSError):
+                return False, None, None
+
+    def _worker(self):
+        "Hàm xử lý luồng lấy nhiệm vụ từ Queue"
+        while True:
+            try:
+                port = self.queue.get_nowait() # Lấy 1 cổng từ hàng đợi (không đợi nếu rỗng)
+            except:
+                break
+
+            is_open, service, banner = self._scan_port(port) # Quét cổng
+            if is_open:
+                port_data = {
+                    "port": port,
+                    "service": service,
+                    "banner": banner
+                }
+                with self.print_lock: # Khoá luồng trước khi ghi vào mảng chung
+                    self.open_ports.append(port_data)
+            
+            with self.print_lock: # Khoá luồng trước khi cập nhật thanh tiến trình 
+                if self.progress_bar:
+                    self.progress_bar.update(1) # Tăng thanh tiến trình lên 1 đơn vị
+
+            self.queue.task_done() # Báo cho queue biết hoàn thành
+
+    def run(self):
+        "Khởi chạy quá trình quét"
+        print(f"[*] Bắt đầu quét mục tiêu: {self.target_host} ({self.target_ip})")
+        print(f"[*] Số lượng cổng quét: {len(self.ports)} | Số luồng: {self.num_threads}\n")
+
+        # Nạp toàn bộ cổng vào hàng đợi queue
+        for port in self.ports:
+            self.queue.put(port)
+
+        # Khởi tạo đối tượng thanh tiến trình tqdm
+        self.progress_bar = tqdm(total=len(self.ports), desc="Tiến trình", unit="port")
+
+        threads = []
+        # Tạo số lượng luồng
+        for _ in range(min(self.num_threads, len(self.ports))):
+            thread = threading.Thread(target=self._worker, daemon=True)
+            threads.append(thread)
+            thread.start() # Bắt đầu luồng
+
+        for thread in threads:
+            thread.join() # Chờ tất cả các luồng hoàn thành công việc
+
+        self.progress_bar.close() # Đóng thanh tiến trình
+        self.open_ports.sort(key=lambda x: x["port"]) 
+
+def parse_ports(port_str):
+    "Phân tích chuỗi đầu vào của cổng"
+    ports = set()
+    try:
+        parts = port_str.split(',')
+        for part in parts:
+            if '-' in part: # Nếu là dải cổng
+                start, end = map(int, part.split('-'))
+                ports.update(range(start, end + 1))
+            else: # Nếu là cổng đơn
+                ports.add(int(part))
+            #Lọc các cổng hợp lệ (1-65535)
+            return sorted([p for p in ports if 1<=p<=65535])
+    except ValueError:
+        print("[!] Lỗi: Chuỗi cổng không hợp lệ. Vui lòng nhập đúng định dạng: 80 hoặc 1-1024 hoặc 80,443.")
+        exit(1)
+
+def main():
+    "Tạo đối tượng argparse để xử lý tham số dòng lệnh"
+    parser = argparse.ArgumentParser(description="Công cụ Port Scanner đa luồng")
+    parser.add_argument("-t", "--target", required=True, help="Địa chỉ IP hoặc Domain của máy chủ cần quét")
+    parser.add_argument("-p", "--ports", default="1-1024", help="Cổng cần quét (VD: 80 hoặc 1-1024 hoặc 80,443)")
+    parser.add_argument("-n", "--threads", type=int, default=100, help="Số lượng luồng tối đa. Mặc định: 100")
+    parser.add_argument("-s", "--timeout", type=float, default=1.0, help="Thời gian chờ kết nối tối đa cho mỗi cổng (giây). Mặc định: 1.0")
+    parser.add_argument("-o", "--output", help="Đường dẫn file JSON để lưu kết quả quét")
+
+    args = parser.parse_args()
+
+    ports_to_scan = parse_ports(args.ports) # Chuyển chuỗi cổng thành list số 
+
+    start_time = time.time() # Lưu thời gian bắt đầu quét
+    scanner = PortScanner(
+        target_host=args.target,
+        ports=ports_to_scan,
+        num_threads=args.threads,
+        timeout=args.timeout)
+    scanner.run() # Thực thi quét
+    duration = time.time() - start_time # Tính thời gian quét
+
+    # In kết quả ra màn hình dạng bảng căn chỉnh cột
+    print("\n" + "=" * 50)
+    print(f"KẾT QUẢ QUÉT CỔNG M MỞ ({len(scanner.open_ports)} cổng mở):")
+    print("=" * 50)
+    print(f"{'PORT':<10}{'SERVICE':<15}{'BANNER/INFO'}")
+    print("-" * 50)
+
+    for item in scanner.open_ports:
+        print(f"{item['port']:<10}{item['service']:<15}{item['banner']}")
+
+    print("=" * 50)
+    print(f"Hoàn thành trong {duration:.2f} giây.")
+
+    # Nếu có tham số xuất file JSON, lưu kết quả vào file
+    if args.output:
+        report = {
+            "target": args.target,
+            "ip": scanner.target_ip,
+            "scan_duration": duration,
+            "open_ports": scanner.open_ports
+        }
+        with open(args.output, 'w', encoding="utf-8") as f:
+            json.dump(report, f, indent=4, ensure_ascii=False)
+        print(f"[+] Kết quả đã được lưu vào file: {args.output}")
+
+if __name__ == "__main__":
+    main()
+
+
