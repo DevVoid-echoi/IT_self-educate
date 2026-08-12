@@ -4,6 +4,9 @@ from typing import Iterable, Optional
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 import json
+from .parser import iter_record
+from .analyzer import analyze
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Analyze a log file")
