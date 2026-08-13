@@ -1,6 +1,7 @@
 import argparse
 import string
-from src.generator import generate_password, evaluate_strength
+from src.generator import generate_password
+from src.evaluator import evaluate_strength
 
 def arg_parser() -> argparse.Namespace:
     """Parse command-line arguments."""
