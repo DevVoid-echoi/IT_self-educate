@@ -1,7 +1,7 @@
 import argparse
 import string
 from src.generator import generate_password
-from src.evaluator import evaluate_strength
+from src/evaluators.manual_evaluator import manual_evaluator
 
 def arg_parser() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -37,7 +37,8 @@ def run_generator_mode():
     print("   CHƯƠNG TRÌNH TẠO MẬT KHẨU BẢO MẬT   ")
     print("=" * 40)
     length, include_nums, include_syms = get_user_inputs()
-    password, strength = generate_password(length, include_nums, include_syms)
+    password = generate_password(length, include_nums, include_syms)
+    manual_strenght, feedback = manual_evaluator(password)
 
     print("\n" + "-" * 30)
     print(f"🔑 Mật khẩu: {password}")
@@ -52,12 +53,8 @@ def run_evaluator_mode(password: str):
 
     if not password:
         password = input("Nhập mật khẩu cần kiểm tra: ").strip()
-
-    length = len(password)
-    include_nums = any(char.isdigit() for char in password)
-    include_syms = any(char in string.punctuation for char in password)
     
-    strength = evaluate_strength(length, include_nums, include_syms)
+    manual_strength = manual_evaluator(password)
 
     print("\n" + "-" * 30)
     print(f"🔑 Mật khẩu: {password}")

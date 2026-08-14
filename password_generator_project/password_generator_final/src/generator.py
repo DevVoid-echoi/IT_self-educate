@@ -1,5 +1,4 @@
 import random, string
-from src.evaluator import evaluate_strength
 
 def generate_password(length: int, include_nums: bool=False, include_syms: bool=False) -> tuple[str, str]:
     """Sinh mật khẩu ngẫu nhiên và trả về tuple: (mật khẩu, độ mạnh)."""
@@ -10,9 +9,7 @@ def generate_password(length: int, include_nums: bool=False, include_syms: bool=
     upper = string.ascii_uppercase
     dig = string.digits
     punct = string.punctuation
-
-    strength = evaluate_strength(length, include_nums, include_syms)
-    letters = lower if strength == 'Weak' else lower + upper
+    letters = lower + upper
 
     ranDig = random.randint(1, max(1, length-1)) if include_nums else 0
     ranPunct = random.randint(1,max(1,length-ranDig-1)) if include_syms else 0
@@ -31,4 +28,4 @@ def generate_password(length: int, include_nums: bool=False, include_syms: bool=
         pwd_chars.append(random.choice(letters))
 
     random.shuffle(pwd_chars)
-    return ''.join(pwd_chars), strength
+    return ''.join(pwd_chars)
