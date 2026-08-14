@@ -33,7 +33,7 @@ include_upper: bool = False) -> str:
         pool += punct
 
     if len(pwd_chars) > length:
-        raise ValueError(f"Password length ({length}) is too short for all requirements ({len(pwd_chars)}")
+        raise ValueError(f"Password length ({length}) is too short for all requirements ({len(pwd_chars)})")
 
     remaining = length - len(pwd_chars)
     
