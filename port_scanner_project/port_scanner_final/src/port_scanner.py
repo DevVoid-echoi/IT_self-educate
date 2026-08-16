@@ -9,7 +9,8 @@ from tqdm import tqdm
 COMMON_SERVICES = {
     21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
     80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS", 3306: "MySQL",
-    3389: "RDP", 5432: "PostgreSQL", 8080: "HTTP-Proxy"
+    3389: "RDP", 5000: "AirPlay/Flask", 5500: "LiveServer", 5432: "PostgreSQL", 
+    6463: "Discord-RPC", 8080: "HTTP-Proxy", 9993: "ZeroTier"
 }
 
 class PortScanner:
@@ -44,6 +45,30 @@ class PortScanner:
         except:
             return "Unknown Service"
 
+    def _analyze_service(self,port, banner):
+        "Tự động suy luận dịch vụ dựa trên Port và nội dung Banner."
+        if port in COMMON_SERVICES:
+            return COMMON_SERVICES[port]
+
+        banner_lower = banner.lower()
+
+        if "http" in banner_lower or "html" in banner_lower:
+            return "HTTP Web Service"
+        elif "jsonrpc" in banner_lower or "desktop_api" in banner_lower:
+            return "RPC/API Service"
+        elif "ssh" in banner_lower:
+            return "SSH"
+        elif "ftp" in banner_lower:
+            return "FTP"
+        elif "smtp" in banner_lower:
+            return "SMTP"
+        elif "mysql" in banner_lower:
+            return "MySQL"
+        elif "tier1" in banner_lower or "spotify" in banner_lower:
+            return "Local App Service"
+
+        return "Unknown"
+
     def _scan_port(self, port):
         "Thực hiện kết nối thử nghiệm đến cổng"
         try:
@@ -52,8 +77,8 @@ class PortScanner:
             result = sock.connect_ex((self.target_ip, port)) # Thử kết nối (Return 0 nếu thành công)
 
             if result == 0:
-                service_name = COMMON_SERVICES.get(port, "Unknown") # Tra cứu tên dịch vụ
                 banner = self._grab_banner(sock) # Thử đọc banner
+                service_name = self._analyze_service(port,banner)
                 sock.close()
                 return True, service_name, banner
             
