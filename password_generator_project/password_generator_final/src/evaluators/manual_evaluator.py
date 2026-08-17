@@ -10,9 +10,16 @@ def check_common_sequences(password: str) -> bool:
     """Check if the password contains common sequences."""
     pwd_split = list(password.lower())
     for i in range(len(pwd_split)-2):
-        cond1 = ord(pwd_split[i]) == ord(pwd_split[i+1])-1 
-        cond2 = ord(pwd_split[i+1]) == ord(pwd_split[i+2])-1
-        if cond1 and cond2:
+        o1, o2, o3 = ord(pwd_split[i]), ord(pwd_split[i+1]), ord(pwd_split[i+2])
+        
+        # Chuỗi tăng dần (abc, 123)
+        inc_seq = (o2 == o1 + 1) and (o3 == o2 + 1)
+        # Chuỗi giảm dần (cba, 321)
+        dec_seq = (o2 == o1 - 1) and (o3 == o2 - 1)
+        # Ký tự lặp liên tiếp (aaa, 111)
+        rep_seq = (o1 == o2 == o3)
+
+        if inc_seq or dec_seq or rep_seq:
             return True
     return False
 
@@ -33,6 +40,10 @@ def manual_evaluator(password: str) -> tuple [str,list[str]]:
         score += 10
     elif length >= 8:
         score += 5
+    elif length >= 6:
+        score -= 5
+    elif length <=5:
+        score -= 10
 
     if has_num: 
         score += 5
