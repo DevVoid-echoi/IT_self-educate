@@ -3,18 +3,21 @@ import socket
 import sys
 
 nickname = input("Choose a nickname: ")
+password=""
+
+if nickname == "admin":
+    password = input("Enter password for admin: ").strip()
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(("127.0.0.1", 9999))
-
-first_msg = client.recv(4096).decode("utf-8", errors="replace")
-if first_msg == "NICK":
-    client.send(nickname.encode('utf-8'))
 
 print("-" * 50)
 print(" HƯỚNG DẪN CHAT:")
 print(" - Nhập tin nhắn và bấm Enter để gửi.")
 print(" - Gõ '/quit' hoặc '/exit' để rời phòng chat.")
+if nickname == "admin":
+    print(" - Gõ /kick <user_name> để đuổi người dùng khỏi phòng chat")
+    print(" - Gõ /ban <user_name> để cấm người dùng vào phòng chat")
 print("-" * 50)
 
 stop_threads = False
@@ -30,10 +33,33 @@ def receive():
                 stop_threads = True
                 client.close()
                 break
+            
+            if message == "NICK":
+                client.send(nickname.encode('utf-8'))
+                continue
 
-            sys.stdout.write(f"\r\033[K{message}")
-            sys.stdout.write(f"{nickname}: ")
-            sys.stdout.flush()
+            elif message == "PASS":
+                client.send(password.encode('utf-8'))
+                continue
+
+            elif message == "BAN":
+                sys.stdout.write("\r\033[KYou are banned from this server!\n")
+                sys.stdout.flush()
+                stop_threads = True
+                client.close()
+                break
+            
+            elif message == "REFUSE":
+                sys.stdout.write("\r\033[KWrong password! Connection refused.\n")
+                sys.stdout.flush()
+                stop_threads = True
+                client.close()
+                break
+            
+            else:
+                sys.stdout.write(f"\r\033[K{message}", end="")
+                sys.stdout.write(f"{nickname}: ")
+                sys.stdout.flush()
 
         except:
             if not stop_threads:
@@ -48,15 +74,38 @@ def write():
     while not stop_threads:
         try:
             user_input = input(f"{nickname}: ")
+            cmd = user_input.strip()
 
-            if user_input.strip().lower() in ["/quit", "/exit"]:
+            if cmd.lower() in ["/quit", "/exit"]:
                 stop_threads = True
                 sys.stdout.write("\r\033[KDisconnecting from server...\n")
                 sys.stdout.flush()
                 client.close()
                 break
 
-            if user_input.strip():
+            if cmd.lower().startswith("/kick"):
+                if nickname == "admin":
+                    target_user = cmd[6:].strip()
+                    if not target_user:
+                        print("Usage: /kick <username>")
+                        continue
+                    client.send(f"KICK {target_user}".encode('utf-8'))
+                else:
+                    print("Command can only be executed by the admin!")
+                continue
+
+            if cmd.lower().startswith("/ban"):
+                if nickname == "admin":
+                    target_user = cmd[6:].strip()
+                    if not target_user:
+                        print("Usage: /ban <username>")
+                        continue
+                    client.send(f"BAN {target_user}".encode('utf-8'))
+                else:
+                    print("Command can only be executed by the admin!")
+                continue
+
+            if cmd:
                 message = f"{nickname}: {user_input}\n"
                 client.send(message.encode('utf-8'))
 
