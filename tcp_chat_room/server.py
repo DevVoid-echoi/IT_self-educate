@@ -103,7 +103,7 @@ def handle(client):
                     if name_to_kick:
                         kick_user(name_to_kick)
                 else:
-                    client.send("Commnad was refused!".encode('utf-8'))
+                    client.send("Command was refused!".encode('utf-8'))
                 continue
 
             if message.startswith('BAN '):
@@ -153,7 +153,7 @@ def receive():
             or "GET" in nickname
             or len(nickname)>30
             or len(nickname) == 0):
-            print(f"Từ chối kết nối không hợp lệ từ {address}")
+            print(f"Deny connection from: {address}")
             client.close()
             continue
 

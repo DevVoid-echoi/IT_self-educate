@@ -57,13 +57,13 @@ def receive():
                 break
             
             else:
-                sys.stdout.write(f"\r\033[K{message}", end="")
+                sys.stdout.write(f"\r\033[K{message}\n")
                 sys.stdout.write(f"{nickname}: ")
                 sys.stdout.flush()
 
-        except:
+        except Exception as e:
             if not stop_threads:
-                sys.stdout.write("\r\033[KConnection error.\n")
+                sys.stdout.write(f"\r\033[KConnection error: {e}\n")
                 sys.stdout.flush()
                 stop_threads = True
                 client.close()
@@ -116,7 +116,9 @@ def write():
             client.close()
             break
 
-        except:
+        except Exception as e:
+            sys.stdout.write(f"\r\033[KError: {e}\n")
+            sys.stdout.flush()
             break
 
 receive_thread = threading.Thread(target=receive, daemon=True)
