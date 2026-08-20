@@ -1,28 +1,8 @@
-import threading
-import socket
 import sys
-
-nickname = input("Choose a nickname: ")
-password=""
-
-if nickname == "admin":
-    password = input("Enter password for admin: ").strip()
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(("127.0.0.1", 9999))
-
-print("-" * 50)
-print(" HƯỚNG DẪN CHAT:")
-print(" - Nhập tin nhắn và bấm Enter để gửi.")
-print(" - Gõ '/quit' hoặc '/exit' để rời phòng chat.")
-if nickname == "admin":
-    print(" - Gõ /kick <user_name> để đuổi người dùng khỏi phòng chat")
-    print(" - Gõ /ban <user_name> để cấm người dùng vào phòng chat")
-print("-" * 50)
 
 stop_threads = False
 
-def receive():
+def receive(client, nickname, password):
     global stop_threads
     while not stop_threads:
         try:
@@ -69,7 +49,7 @@ def receive():
                 client.close()
             break
 
-def write():
+def write(client, nickname):
     global stop_threads
     while not stop_threads:
         try:
@@ -120,12 +100,3 @@ def write():
             sys.stdout.write(f"\r\033[KError: {e}\n")
             sys.stdout.flush()
             break
-
-receive_thread = threading.Thread(target=receive, daemon=True)
-receive_thread.start()
-
-write()
-
-sys.stdout.write("\r\033[K")
-sys.stdout.flush()
-sys.exit(0)
