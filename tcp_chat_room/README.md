@@ -10,7 +10,7 @@
 tcp_chat_room/
 ├── config.py                     # Cấu hình chung (HOST, PORT, ...)
 ├── data
-    ├──ban.txt                        # Danh
+    └── ban.txt                        # Danh
 sách người dùng bị cấm
 │
 ├── server_side/                        # Mã nguồn phía Server

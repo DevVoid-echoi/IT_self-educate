@@ -10,7 +10,7 @@ if PARENT_DIR not in sys.path:
 from config import HOST, PORT, SCRIPT_DIR, BAN_FILE_PATH, ADMIN_PASSWORD
 from client_management.lock import state_lock
 from client_management.ban_handler import get_banned_users, add_ban
-from client_management.actions import clients, nicknames, broadcast, kick_user, handle
+from client_management.actions import clients, nicknames, read_line, broadcast, kick_user, handle_messages, clean_up_client
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -22,36 +22,43 @@ def receive():
         client, address = server.accept()
         print(f"Connected with {str(address)}")
 
-        client.send('NICK'.encode('utf-8'))
-        nickname = client.recv(4096).decode('utf-8', errors='replace').strip()
+        buffer = ""
+        line, buffer = read_line(client, buffer)
+        if not line or not line.startswith("NICK "):
+            client.close()
+            continue
 
-        if ("HTTP/" in nickname 
-            or "HEAD" in nickname
-            or "GET" in nickname
-            or len(nickname) > 30
-            or len(nickname) == 0):
+        nickname = line[5:].strip()
+
+        if (len(nickname) > 30 or len(nickname) == 0):
+            client.send("ERR INVALID_NICK\n".encode("utf-8"))
             print(f"Denied connection from: {address}")
             client.close()
             continue
 
         with state_lock:
             if nickname in nicknames:
-                client.send("NICK_TAKEN".encode("utf-8"))
+                client.send("ERR NICKNAME_TAKEN\n".encode("utf-8"))
                 client.close()
                 continue
 
         banned_users = get_banned_users()
         if nickname in banned_users:
-            client.send("BAN".encode('utf-8'))
+            client.send("ERR BANNED\n".encode('utf-8'))
             client.close()
             continue
         
         if nickname == 'admin':
-            client.send('PASS'.encode('utf-8'))
-            password = client.recv(4096).decode('utf-8', errors='replace').strip()
+            client.send('AUTH_REQUIRED\n'.encode('utf-8'))
+            line, buffer = read_line(client, buffer)
+            if not line or not line.startswith("AUTH "):
+                client.close()
+                continue
+
+            password = line[5:].strip()
 
             if password != ADMIN_PASSWORD:
-                client.send('REFUSE'.encode('utf-8'))
+                client.send('ERR WRONG_PASSWORD\n'.encode('utf-8'))
                 client.close()
                 continue
 
@@ -60,10 +67,10 @@ def receive():
             nicknames.append(nickname)
 
         print(f"Nickname of the client is {nickname}!")
-        broadcast(f"{nickname} joined the chat!".encode('utf-8'), sender=client)
-        client.send("Connected to the server!\n".encode('utf-8'))
+        broadcast(f"MSG {nickname} joined the chat!\n".encode('utf-8'), sender=client)
+        client.send("OK Connected to the server!\n".encode('utf-8'))
 
-        thread = threading.Thread(target=handle, args=(client,))
+        thread = threading.Thread(target=handle_messages, args=(client,), daemon=True)
         thread.start()
 
 try:
