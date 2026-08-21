@@ -12,20 +12,40 @@ from client_management.instructions import print_instructions
 from client_management.connection import receive, write, read_line
 
 def main():
-    nickname = input("Choose a nickname: ")
-
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((HOST, PORT))
-
-    client.send(f"NICK {nickname}\n".encode("utf-8"))
-    
     buffer = ""
-    line, buffer = read_line(client, buffer)
 
-    if line == "AUTH_REQUIRED":
-        password = input("Enter admin password: ").strip()
-        client.send(f"AUTH {password}\n".encode("utf-8"))
-        line, buffer = read_line(client, buffer)
+    print("=== CHAT SYSTEM AUTHENTICATION ===")
+    while True:
+        choice = input("Choose (1: Login, 2: Register): ").strip()
+        username = input("Username: ").strip()
+        password = input("Password: ").strip()
+
+        if choice == "1":
+            client.send(f"LOGIN {username} {password}\n".encode("utf-8"))
+            line, buffer = read_line(client, buffer)
+            if line is None:
+                print(">> Server closed connection during registration.")
+                client.close()
+                sys.exit(1)
+
+            if line and line.startswith("OK"):
+                print(">> Đăng nhập thành công!")
+                nickname = username
+                break
+
+            else:
+                print(f">> Lỗi đăng nhập: {line}")
+
+        elif choice == "2":
+            client.send(f"REGISTER {username} {password}\n".encode("utf-8"))
+            line, buffer = read_line(client, buffer)
+            if line is None:
+                print(">> Server closed connection during registration.")
+                client.close()
+                sys.exit(1)
+            print(f">> Phản hồi đăng ký: {line}")
 
     if not line or line.startswith("ERR "):
         msg = line[4:]
