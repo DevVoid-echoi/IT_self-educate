@@ -7,7 +7,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USERS_FILE = os.path.join(BASE_DIR, "auth", "user.json")
 
-from config import ADMIN_PASSWORD
+from auth.password import ADMIN_PASSWORD
 
 def _load_users():
     """Read accounts from JSON file"""

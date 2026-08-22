@@ -6,4 +6,3 @@ PORT = 9999
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BAN_FILE_PATH = os.path.join(SCRIPT_DIR, "ban.txt")
 
-ADMIN_PASSWORD = "admin123"

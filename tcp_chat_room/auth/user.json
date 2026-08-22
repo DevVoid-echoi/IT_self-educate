@@ -6,5 +6,9 @@
     "e": {
         "password_hash": "1bcf15695e848d551a96bf256df0b5c8c9df37e5c89515bf9775e679218d096f",
         "role": "user"
+    },
+    "admin": {
+        "password_hash": "5c42a92dac63e359c238bea5bd48bcd501ea3069dbb7692fd9cad12b2aa208d2",
+        "role": "user"
     }
 }
