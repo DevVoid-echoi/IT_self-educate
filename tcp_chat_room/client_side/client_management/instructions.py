@@ -1,6 +1,7 @@
 import sys
 
 def print_instructions(nickname):
+    """Print instructions for users and special instructions for admin"""
     print("-" * 50)
     print(" HƯỚNG DẪN CHAT:")
     print(" - Nhập tin nhắn và bấm Enter để gửi.")
