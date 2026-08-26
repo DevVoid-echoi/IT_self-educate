@@ -10,8 +10,8 @@ if PARENT_DIR not in sys.path:
 from config import HOST, PORT, SCRIPT_DIR, BAN_FILE_PATH
 from client_management.lock import state_lock
 from client_management.ban_handler import get_banned_users, add_ban
-from client_management.actions import clients, nicknames, read_line, broadcast, kick_user, handle_messages, clean_up_client
-from auth.authentication import login, register
+from client_management.actions import clients, nicknames, read_line, broadcast, kick_user, handle_messages, clean_up_client, user_sessions
+from auth.authentication import login, register, set_user_role
 
 """Connect using IPv4 and TCP"""
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,11 +44,13 @@ def receive():
                         session = user_session
                     else:
                         client.send("ERR WRONG_AUTH\n".encode("utf-8")) # Decline due to wrong information
+                        continue
                 else:
                     client.send("ERR INVALID_FORMAT\n".encode("utf-8"))
+                    continue
 
             """Register new users"""
-            elif line.startswith("REGISTER "):
+            if line.startswith("REGISTER "):
                 parts = line.split(" ", 2)
                 if len(parts) == 3:
                     _, username, password = parts
@@ -86,6 +88,7 @@ def receive():
         with state_lock:
             clients.append(client)
             nicknames.append(nickname)
+            user_sessions[client] = session
 
         # --- Succeed and start threads ---
         print(f"User '{nickname}' ({session['role']}) connected successfully!")

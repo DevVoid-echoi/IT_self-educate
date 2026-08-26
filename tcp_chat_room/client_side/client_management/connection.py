@@ -39,7 +39,7 @@ def receive(client, nickname):
             continue
         
         """Disconnect if reveived error messages"""
-        elif message == "ERR ":
+        if line.startswith("ERR "):
             err = line[4:]
             sys.stdout.write(f"\r\033[K[Error] {err}\n")
             sys.stdout.flush()
@@ -68,7 +68,7 @@ def write(client, nickname):
                 break
             
             """Only allow admin to kick and remove the user"""
-            elif cmd.lower().startswith("/kick"):
+            if cmd.lower().startswith("/kick"):
                 if nickname == "admin":
                     target_user = cmd[6:].strip()
                     if not target_user:
@@ -80,7 +80,7 @@ def write(client, nickname):
                 continue
 
             """Only allow admin to ban, remove the user and add the banned user to a list to avoid future register/login"""
-            elif cmd.lower().startswith("/ban"):
+            if cmd.lower().startswith("/ban"):
                 if nickname == "admin":
                     target_user = cmd[5:].strip()
                     if not target_user:
@@ -91,7 +91,7 @@ def write(client, nickname):
                     print("Command can only be executed by the admin!")
                 continue
 
-            elif cmd:
+            if cmd:
                 client.send(f"MSG {user_input}\n".encode('utf-8'))
 
         except (KeyboardInterrupt, EOFError):

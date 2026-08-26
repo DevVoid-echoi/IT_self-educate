@@ -1,8 +1,10 @@
-from client_management.lock import state_lock
-from client_management.ban_handler import add_ban
+from server_side.client_management.lock import state_lock
+from server_side.client_management.ban_handler import add_ban, remove_ban
+from auth.rbac import has_permission, Permission
 
 clients = []
 nicknames = []
+user_sessions = {}
 
 def read_line(sock, buffer):
     """Read full-line messages"""
@@ -27,6 +29,8 @@ def clean_up_client(client, disconect_msg):
                 clients.pop(index)
             else:
                 nickname = None
+            
+            user_sessions.pop(client, None)
 
     try:
         client.close()
@@ -56,7 +60,7 @@ def broadcast(message, sender=None):
                 print(f"Error sending message: {e}")
                 disconnected_clients.append(client) # Disconnect the user if get an error while sending the message
     for client in disconnected_clients:
-        clean_up_client(client, "disconnected") "Clean up the disconnected client"
+        clean_up_client(client, "disconnected") # Clean up the disconnected client
 
 def kick_user(name):
     """Remove the user in kick command"""
@@ -66,6 +70,7 @@ def kick_user(name):
             index = nicknames.index(name)
             client_to_kick = clients.pop(index)
             nicknames.pop(index)
+            user_sessions.pop(index)
 
     if client_to_kick:
         try:
@@ -78,6 +83,13 @@ def kick_user(name):
 
 def handle_messages(client):
     """Handle received messages from users"""
+    session = user_sessions.get(client)
+    if not session:
+        client.send("ERR NOT_AUTHENTICATED\n".encode("utf-8"))
+        return
+
+    user_role = session.get("role", "user")
+
     buffer = ""
     while True:
         line, buffer = read_line(client, buffer)
@@ -97,27 +109,38 @@ def handle_messages(client):
 
         """Check if the user is admin and remove the target user"""
         if line.startswith('KICK '):
-            if current_nick == "admin":
-                name_to_kick = line[5:].strip()
-                if name_to_kick:
-                    kick_user(name_to_kick)
-            else:
-                client.send("MSG Command was refused!\n".encode('utf-8')) # Refused command if not admin
+            if not has_permission(user_role, Permission.KICK):
+                client.send("ERR PERMISSION_DENIED: You do not have KICK permission.\n".encode("utf-8"))
+                continue
+
+            name_to_kick = line[5:].strip()
+            if name_to_kick:
+                kick_user(name_to_kick)
             continue
 
         """Check if the user is admin and ban the target user"""
         if line.startswith('BAN '):
-            if current_nick == "admin":
-                name_to_ban = line[4:].strip()
-                if name_to_ban:
-                    add_ban(name_to_ban)
-                    kick_user(name_to_ban)
-                    print(f'{name_to_ban} was banned!')
-            else:
-                client.send("MSG Command was refused\n!".encode('utf-8')) # Refused command if not admin
+            if not has_permission(user_role, Permission.BAN):
+                client.send("ERR PERMISSION_DENIED: You do not have BAN permission.\n".encode("utf-8"))
+                continue
+
+            name_to_ban = line[4:].strip()
+            if name_to_ban:
+                add_ban(name_to_ban)
+                kick_user(name_to_ban)
+                print(f'{name_to_ban} was banned!')
             continue
 
+        if line.startswith("UNBAN "):
+            if not has_permission(user_role, Permission.UNBAN):
+                client.send("ERR PERMISSION DENIED: You do not have UNBAN permission.\n".encode("utf-8"))
+                continue
+
+            target_user = line[6:].strip()
+            remove_ban(target_user)
+            print(f'{target_user} was unbanned!')
+
         """Broadcast the normal message"""
-        if line.startswith("MSG" ):
+        if line.startswith("MSG "):
             content = line[4:]
             broadcast(f"MSG {current_nick}: {content}\n".encode("utf-8"), sender=client)

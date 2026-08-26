@@ -79,3 +79,21 @@ def login(username, password):
     else:
         print(f"[AUTH LOG] Login failed: Invalid password for user '{username}'.")
         return False, None
+
+def set_user_role(username: str, new_role: str) -> bool:
+    """Assign new role for an acoount"""
+    username = username.strip().lower()
+
+    if new_role not in ["admin", "user"]:
+        print(f"[AUTH LOG] Set role failed: Invalid role '{new_role}'.")
+        return False
+
+    users = _load_users()
+    if username not in users:
+        print(f"[AUTH LOG] Set role failed: User '{username}' not found.")
+        return False
+
+    users[username]["role"] = new_role
+    _save_users(users)
+    print(f"[AUTH LOG] Success: User '{username}' assigned role '{new_role}'.")
+    return True

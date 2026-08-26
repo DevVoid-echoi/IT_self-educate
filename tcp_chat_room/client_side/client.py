@@ -42,7 +42,7 @@ def main():
                 print(f">> Lỗi đăng nhập: {line}")
 
         """Send REGISTER request and check received message to see if user successfully registered"""
-        elif choice == "2":
+        if choice == "2":
             client.send(f"REGISTER {username} {password}\n".encode("utf-8"))
             line, buffer = read_line(client, buffer)
             if line is None:# Close connection if not receive any message

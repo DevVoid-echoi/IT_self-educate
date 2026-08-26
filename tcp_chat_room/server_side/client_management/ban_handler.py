@@ -19,3 +19,12 @@ def add_ban(nickname):
     """Add ban users"""
     with open(BAN_FILE_PATH, 'a', encoding="utf-8") as f:
         f.write(f"{nickname}\n")
+
+def remove_ban(nickname):
+    """Remove banned users"""
+    banned_users = get_banned_users()
+    if nickname in banned_users:
+        banned_users.remove(nickname)
+        with open(BAN_FILE_PATH, 'w', encoding="utf-8") as f:
+            for user in banned_users:
+                f.write(f"{user}\n")
