@@ -83,6 +83,7 @@ def login(username, password):
 def set_user_role(username: str, new_role: str) -> bool:
     """Assign new role for an acoount"""
     username = username.strip().lower()
+    new_role = new_role.strip().lower()
 
     if new_role not in ["admin", "user"]:
         print(f"[AUTH LOG] Set role failed: Invalid role '{new_role}'.")

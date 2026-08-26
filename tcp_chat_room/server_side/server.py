@@ -103,25 +103,30 @@ def server_console_input():
         try:
             cmd = input().strip()
             if cmd.startswith("/set "):
-                target_user = cmd[5:].strip().lower()
-                if not target_user:
-                    print("[SERVER CONSOLE] Usage: /set <username>")
+                parts = cmd[5:].strip().split()
+                if len(parts) < 2:
+                    print("[SERVER CONSOLE] Usage: /set <username> <role> (e.g. /set alice moderator)")
                     continue
+                target_user = parts[0].strip().lower()
+                new_role = parts[1].strip().lower()
 
-                if set_user_role(target_user, "admin"):
-                    print(f"[SERVER CONSOLE] Success: User '{target_user}' is now an Admin!")
+                if set_user_role(target_user, new_role):
+                    print(f"[SERVER CONSOLE] Success: User '{target_user}' is now an '{new_role}'!")
 
                     with state_lock:
                         if target_user in nicknames:
                             index = nicknames.index(target_user)
                             user_sock = clients[index]
                             if user_sock in user_sessions:
-                                user_sessions[user_sock]["role"] = "admin"
-                                user_sock.send("MSG [SYSTEM] You have been granted Admin role by Server Admin!\n".encode("utf-8"))
-                                user_sock.send("MSG - Type /kick <user_name> to kick a user out of the chat room\n".encode("utf-8"))
-                                user_sock.send("MSG - Type /ban <user_name> to ban a user from the chat room\n".encode("utf-8"))
-                            else:
-                                print(f"[SERVER CONSOLE] Failed: User '{target_user}' not found.")
+                                user_sessions[user_sock]["role"] = new_role
+                                user_sock.send(f"MSG [SYSTEM] Your role has been updated to '{new_role}' by Server Admin!\n".encode("utf-8"))
+                                if new_role == "admin":
+                                    user_sock.send("MSG [SYSTEM] New commands unlocked:\n".encode("utf-8"))
+                                    user_sock.send("MSG [SYSTEM] You have been granted '{role}' role by Server Admin!\n".encode("utf-8"))
+                                    user_sock.send("MSG - Type /kick <user_name> to kick a user out of the chat room\n".encode("utf-8"))
+                                    user_sock.send("MSG - Type /ban <user_name> to ban a user from the chat room\n".encode("utf-8"))
+                else:
+                    print(f"[SERVER CONSOLE] Failed: User '{target_user}' not found.")
 
         except (EOFError, KeyboardInterrupt):
             break
