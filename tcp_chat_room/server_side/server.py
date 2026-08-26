@@ -92,14 +92,44 @@ def receive():
 
         # --- Succeed and start threads ---
         print(f"User '{nickname}' ({session['role']}) connected successfully!")
-        client.send(f"OK Connected as {nickname}\n".encode("utf-8"))
+        client.send(f"OK Connected as {nickname}, role:{session['role']}\n".encode("utf-8"))
         broadcast(f"MSG {nickname} joined the chat!\n".encode("utf-8"), sender=client)
 
         thread = threading.Thread(target=handle_messages, args=(client,), daemon=True)
         thread.start()
 
+def server_console_input():
+    while True:
+        try:
+            cmd = input().strip()
+            if cmd.startswith("/set "):
+                target_user = cmd[5:].strip().lower()
+                if not target_user:
+                    print("[SERVER CONSOLE] Usage: /set <username>")
+                    continue
+
+                if set_user_role(target_user, "admin"):
+                    print(f"[SERVER CONSOLE] Success: User '{target_user}' is now an Admin!")
+
+                    with state_lock:
+                        if target_user in nicknames:
+                            index = nicknames.index(target_user)
+                            user_sock = clients[index]
+                            if user_sock in user_sessions:
+                                user_sessions[user_sock]["role"] = "admin"
+                                user_sock.send("MSG [SYSTEM] You have been granted Admin role by Server Admin!\n".encode("utf-8"))
+                                user_sock.send("MSG - Type /kick <user_name> to kick a user out of the chat room\n".encode("utf-8"))
+                                user_sock.send("MSG - Type /ban <user_name> to ban a user from the chat room\n".encode("utf-8"))
+                            else:
+                                print(f"[SERVER CONSOLE] Failed: User '{target_user}' not found.")
+
+        except (EOFError, KeyboardInterrupt):
+            break
+
 try:
     print(f"Server is running on {HOST}:{PORT}...")
+    console_threading = threading.Thread(target=server_console_input, daemon=True)
+    console_threading.start()
     receive()
 except KeyboardInterrupt:
     print("\nServer is shutting down...")

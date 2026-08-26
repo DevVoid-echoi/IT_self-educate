@@ -34,8 +34,12 @@ def main():
                 sys.exit(1)
 
             if line and line.startswith("OK"): # If succcessfully login, print the announcement and set nickname = username
-                print(">> Đăng nhập thành công!")
+                print(">> Login successfully!")
                 nickname = username
+                user_role = "user"
+                if "role:" in line:
+                    user_role = line.split("role:")[1].strip()
+                print_instructions(nickname, user_role) # Print instructions based on the role of user
                 break
 
             else: # Show any login error
@@ -58,9 +62,6 @@ def main():
         print(f"Connection refused: {msg}")
         client.close()
         sys.exit(1)
-
-    """Print instructions based on the role of user"""
-    print_instructions(nickname)
 
     """Create receive thread and start thread"""
     receive_thread = threading.Thread(
