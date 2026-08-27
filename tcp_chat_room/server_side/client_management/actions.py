@@ -1,6 +1,7 @@
 from server_side.client_management.lock import state_lock
 from server_side.client_management.ban_handler import add_ban, remove_ban
 from auth.rbac import has_permission, Permission
+from server_side.logs_management.record_logs import log_event
 
 clients = []
 nicknames = []
@@ -20,7 +21,7 @@ def read_line(sock, buffer):
     line, buffer = buffer.split("\n", 1)
     return line.strip(), buffer
 
-def clean_up_client(client, disconect_msg):
+def clean_up_client(client, disconnect_msg):
     """Clean up disconnected users"""
     with state_lock:
             if client in clients:
@@ -38,8 +39,9 @@ def clean_up_client(client, disconect_msg):
         pass
 
     if nickname: # Print annoucement that the disconnected user left the chat
-        print(f"Client {nickname} {disconect_msg}!")
+        print(f"Client {nickname} {disconnect_msg}!")
         broadcast(f"MSG {nickname} left the chat!\n",sender=client)
+        log_event("USER_DISCONNECTED", username=nickname)
 
 
 def broadcast(message, sender=None):
@@ -110,18 +112,21 @@ def handle_messages(client):
         """Check if the user is admin and remove the target user"""
         if line.startswith('KICK '):
             if not has_permission(user_role, Permission.KICK):
-                client.send("ERR PERMISSION_DENIED: You do not have KICK permission.\n".encode("utf-8"))
+                client.send("MSG PERMISSION_DENIED: You do not have KICK permission.\n".encode("utf-8"))
+                log_event("INVALID_COMMAND", username=current_nick, extra_info=f"cmd=KICK_PERMISSION_DENIED")
                 continue
 
             name_to_kick = line[5:].strip()
             if name_to_kick:
                 kick_user(name_to_kick)
+                log_event("KICK", username=name_to_kick, extra_info=f"by={current_nick}")
             continue
 
         """Check if the user is admin and ban the target user"""
         if line.startswith('BAN '):
             if not has_permission(user_role, Permission.BAN):
-                client.send("ERR PERMISSION_DENIED: You do not have BAN permission.\n".encode("utf-8"))
+                client.send("MSG PERMISSION_DENIED: You do not have BAN permission.\n".encode("utf-8"))
+                log_event("INVALID_COMMAND", username=current_nick, extra_info=f"cmd=BAN_PERMISSION_DENIED")
                 continue
 
             name_to_ban = line[4:].strip()
@@ -129,16 +134,20 @@ def handle_messages(client):
                 add_ban(name_to_ban)
                 kick_user(name_to_ban)
                 print(f'{name_to_ban} was banned!')
+                log_event("BAN", username=name_to_ban, extra_info=f"by={current_nick}")
+
             continue
 
         if line.startswith("UNBAN "):
             if not has_permission(user_role, Permission.UNBAN):
-                client.send("ERR PERMISSION DENIED: You do not have UNBAN permission.\n".encode("utf-8"))
+                client.send("MSG PERMISSION DENIED: You do not have UNBAN permission.\n".encode("utf-8"))
+                log_event("INVALID_COMMAND", username=current_nick, extra_info=f"cmd=UNBAN_PERMISSION_DENIED")
                 continue
 
             target_user = line[6:].strip()
             remove_ban(target_user)
             print(f'{target_user} was unbanned!')
+            log_event("UNBAN", username=target_user, extra_info=f"by={current_nick}")
 
         """Broadcast the normal message"""
         if line.startswith("MSG "):

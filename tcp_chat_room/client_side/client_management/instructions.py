@@ -8,9 +8,9 @@ def print_instructions(nickname, user_role = "user"):
     print(" - Enter a message and press Enter to send.")
     print(" - Type '/quit' or '/exit' to leave the chat room.")
     if has_permission(user_role, Permission.KICK):
-        print(" - Type /kick <user_name> to kick a user out of the chat room")
+        print(" - Type '/kick' <user_name> to kick a user out of the chat room")
     if has_permission(user_role, Permission.BAN):
-        print(" - Type /ban <user_name> to ban a user from the chat room")
+        print(" - Type '/ban' <user_name> to ban a user from the chat room")
     if has_permission(user_role, Permission.UNBAN):
-        print(" - Type /unban <user_name> to unban a user")
+        print(" - Type '/unban' <user_name> to unban a user")
     print("-" * 50)
