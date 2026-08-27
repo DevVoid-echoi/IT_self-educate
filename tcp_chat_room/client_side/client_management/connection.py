@@ -67,29 +67,30 @@ def write(client, nickname):
                 client.close()
                 break
             
-            """Only allow admin to kick and remove the user"""
-            if cmd.lower().startswith("/kick"):
-                if nickname == "admin":
-                    target_user = cmd[6:].strip()
-                    if not target_user:
-                        print("Usage: /kick <username>")
-                        continue
-                    client.send(f"KICK {target_user}\n".encode('utf-8'))
-                else:
-                    print("Command can only be executed by the admin!")
+            """Send KICK command to the server for permission validation"""
+            if cmd.lower().startswith("/kick "):
+                target_user = cmd[6:].strip()
+                if not target_user:
+                    print("Usage: /kick <username>")
+                    continue
+                client.send(f"KICK {target_user}\n".encode('utf-8'))
                 continue
 
-            """Only allow admin to ban, remove the user and add the banned user to a list to avoid future register/login"""
-            if cmd.lower().startswith("/ban"):
-                if nickname == "admin":
-                    target_user = cmd[5:].strip()
-                    if not target_user:
-                        print("Usage: /ban <username>")
-                        continue
-                    client.send(f"BAN {target_user}\n".encode('utf-8'))
-                else:
-                    print("Command can only be executed by the admin!")
+            """Send BAN command to the server for permission validation"""
+            if cmd.lower().startswith("/ban "):
+                target_user = cmd[5:].strip()
+                if not target_user:
+                    print("Usage: /ban <username>")
+                    continue
+                client.send(f"BAN {target_user}\n".encode('utf-8'))
                 continue
+
+            if cmd.lower().startswith("/unban "):
+                target_user = cmd[7:].strip()
+                if not target_user:
+                    print("Usage: /kick <username>")
+                    continue
+                client.send(f"UNBAN {target_user}\n".encode('utf-8'))
 
             if cmd:
                 client.send(f"MSG {user_input}\n".encode('utf-8'))
