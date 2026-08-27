@@ -70,7 +70,7 @@ def kick_user(name):
             index = nicknames.index(name)
             client_to_kick = clients.pop(index)
             nicknames.pop(index)
-            user_sessions.pop(index)
+            user_sessions.pop(client_to_kick, None)
 
     if client_to_kick:
         try:
