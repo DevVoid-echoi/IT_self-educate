@@ -1,0 +1,10 @@
+{
+    "a": {
+        "password_hash": "43424ae951730daba58d28304c1376a0da204d10d37c2613308ff13b23301376",
+        "role": "user"
+    },
+    "admin": {
+        "password_hash": "5c42a92dac63e359c238bea5bd48bcd501ea3069dbb7692fd9cad12b2aa208d2",
+        "role": "admin"
+    }
+}

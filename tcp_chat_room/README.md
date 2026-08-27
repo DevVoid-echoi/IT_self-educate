@@ -27,7 +27,8 @@ tcp_chat_room/
 │   ├── password.py          # Hàm mã hóa & kiểm tra mật khẩu
 │   └── rbac.py              # Định nghĩa Roles & Permissions (ADMIN, MODERATOR, USER)
 ├── client_side/
-│   ├── connection.py        # Quản lý kết nối TCP phía Client
+│   ├── client_management/
+    │    ├──    connection.py        # Quản lý kết nối TCP phía Client
 │   │   └── instruction.py       # Hiển thị hướng dẫn lệnh động theo Role người dùng
 │   └──    client.py            # Khởi chạy Client chat
 │

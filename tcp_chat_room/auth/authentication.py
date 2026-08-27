@@ -5,7 +5,7 @@ import sys
 
 """Path to base directory(To import config)"""
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-USERS_FILE = os.path.join(BASE_DIR, "auth", "user.json")
+USERS_FILE = os.path.join(BASE_DIR, "data", "user.json")
 
 from auth.password import ADMIN_PASSWORD
 
