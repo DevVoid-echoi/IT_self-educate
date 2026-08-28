@@ -1,4 +1,3 @@
-Markdown
 # Multi-Threaded TCP Chat System with RBAC & Security Logging
 
 A multi-threaded Client-Server chat system built using Python Pure-Sockets. The project focuses on a security-centric architecture featuring user authentication, Role-Based Access Control (RBAC), real-time administrative management via Server Console, production-ready security logging, and an integrated log parsing module for security analysis.
