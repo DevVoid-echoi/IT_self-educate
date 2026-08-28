@@ -87,7 +87,7 @@ def receive():
         with state_lock:
             if nickname in nicknames:
                 client.send("ERR ALREADY_LOGGED_IN\n".encode("utf-8"))
-                log_event("LOGIN_FAILED", username=username, ip=ip_addr, extra_info="reason=ALREDY_LOGGED_IN")
+                log_event("LOGIN_FAILED", username=nickname, ip=ip_addr, extra_info="reason=ALREDY_LOGGED_IN")
                 client.close()
                 continue
 
@@ -95,7 +95,7 @@ def receive():
         banned_users = get_banned_users()
         if nickname in banned_users:
             client.send("ERR BANNED\n".encode('utf-8'))
-            log_event("LOGIN_FAILED", username=username, ip=ip_addr, extra_info="reason=BANNED")
+            log_event("LOGIN_FAILED", username=nickname, ip=ip_addr, extra_info="reason=BANNED")
             client.close()
             continue
 
@@ -126,7 +126,7 @@ def server_console_input():
 
                 if set_user_role(target_user, new_role):
                     print(f"[SERVER CONSOLE] Success: User '{target_user}' is now an '{new_role}'!")
-                    log_event("SET", username=target_user, extra_info="{new_role}") 
+                    log_event("SET", username=target_user, extra_info=f"new_role={new_role}") 
 
                     with state_lock:
                         if target_user in nicknames:
