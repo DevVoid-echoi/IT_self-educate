@@ -1,3 +1,4 @@
+```markdown
 # Multi-Threaded TCP Chat System with RBAC & Security Logging
 
 A multi-threaded Client-Server chat system built using Python Pure-Sockets. The project focuses on a security-centric architecture featuring user authentication, Role-Based Access Control (RBAC), real-time administrative management via Server Console, production-ready security logging, and an integrated log parsing module for security analysis.
@@ -51,48 +52,77 @@ tcp_chat_room/
 │   └── server.py            # Main entry point for TCP Server & Console Thread
 ├── config.py                # Configuration parameters: PORT, HOST, and file paths
 └── README.md                # Project documentation
-🛠️ Commands & Syntax
-1. Server Console (Executed directly from the Server Terminal)
-/set <username> <role>: Assigns a new role to a user (admin, moderator, user).
 
-2. Client Chat Room
-/quit or /exit: Disconnects and exits the chat room.
+```
 
-/kick <username>: Removes a user from the chat room (Requires KICK permission).
+---
 
-/ban <username>: Permanently bans a user from joining (Requires BAN permission).
+## 🛠️ Commands & Syntax
 
-/unban <username>: Lifts a ban for a specified user (Requires UNBAN permission).
+### 1. Server Console (Executed directly from the Server Terminal)
 
-🚀 Getting Started
-Prerequisites
-Python 3.10+ (Built using Python standard libraries; no external package dependencies required).
+* `/set <username> <role>`: Assigns a new role to a user (`admin`, `moderator`, `user`).
 
-Step 1: Launch the Server
-Open a terminal in the project root directory (tcp_chat_room):
+### 2. Client Chat Room
 
-Bash
+* `/quit` or `/exit`: Disconnects and exits the chat room.
+* `/kick <username>`: Removes a user from the chat room *(Requires KICK permission)*.
+* `/ban <username>`: Permanently bans a user from joining *(Requires BAN permission)*.
+* `/unban <username>`: Lifts a ban for a specified user *(Requires UNBAN permission)*.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+* **Python 3.10+** (Built using Python standard libraries; no external package dependencies required).
+
+### Step 1: Launch the Server
+
+Open a terminal in the project root directory (`tcp_chat_room`):
+
+```bash
 python3 server_side/server.py
-Step 2: Launch the Client
+
+```
+
+### Step 2: Launch the Client
+
 Open another terminal window and run:
 
-Bash
+```bash
 python3 client_side/client.py
-Step 3: Run Security Log Analysis
-To parse and generate a statistical report from logs/security.log, execute:
 
-Bash
+```
+
+### Step 3: Run Security Log Analysis
+
+To parse and generate a statistical report from `logs/security.log`, execute:
+
+```bash
 python3 log_parser/src/main.py logs/security.log
-📝 Security Log & Parser Output Format
-1. Log Event Format (logs/security.log)
-Plaintext
+
+```
+
+---
+
+## 📝 Security Log & Parser Output Format
+
+### 1. Log Event Format (`logs/security.log`)
+
+```text
 2026-08-27 15:00:10 INFO USER_CONNECTED username=N/A ip=127.0.0.1
 2026-08-27 15:00:15 INFO LOGIN_SUCCESS username=alice ip=127.0.0.1
 2026-08-27 15:00:22 WARNING LOGIN_FAILED username=bob ip=127.0.0.1
 2026-08-27 15:01:05 WARNING KICK username=spammer by=admin
 2026-08-27 15:01:10 WARNING BAN username=spammer by=admin
-2. Log Parser Analytics Report (log_parser)
-JSON
+
+```
+
+### 2. Log Parser Analytics Report (`log_parser`)
+
+```json
 {
   "total_requests": 5,
   "successful_logins": 1,
@@ -105,3 +135,9 @@ JSON
     ["127.0.0.1", 2]
   ]
 }
+
+```
+
+```
+
+```
