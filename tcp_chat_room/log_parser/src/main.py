@@ -6,16 +6,30 @@ from dataclasses import dataclass
 import json
 from parser import iter_record
 from analyzer import analyze
+import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SEC_LOG_PATH = os.path.join(BASE_DIR, "logs", "security.log")
+SER_LOG_PATH = os.path.join(BASE_DIR, "logs", "server.log")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Analyze a log file")
-    parser.add_argument("log_file", help="Path to the log file")
+    parser.add_argument("-f", "--file",
+                        choices=["security", "server"],
+                        help="Path to the security/server/both log file"
+                        )
     parser.add_argument("-o", "--output", help="Path to the output file (optional)")
 
     args = parser.parse_args()
 
-    results = analyze(iter_record(args.log_file))
+    if args.file == "server":
+        LOG_PATH = SER_LOG_PATH
+    if args.file == "security":
+        LOG_PATH = SEC_LOG_PATH
+
+    results = analyze(iter_record(LOG_PATH))
 
     total_requests = results["total_requests"]
     successful_logins = results["successful_logins"]
@@ -27,6 +41,13 @@ def main() -> int:
     top_5_IPs = results["top_5_IPs"]
 
     print("\n" + "=" * 50)
+    print(f"Target log path: {LOG_PATH}")
+    if os.path.exists(LOG_PATH):
+        with open(LOG_PATH, "r", encoding="utf-8") as f:
+            print("--- LOG CONTENT ---")
+            print(f.read())
+    else:
+        print("Log file does not exist!")
     print(f"Total request: {total_requests}")
     print("-" * 50)
 

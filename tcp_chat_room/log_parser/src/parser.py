@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Iterable, Optional
-import json
 from models import LogRecord
 
 def iter_record(log_file: str) -> Iterable[LogRecord]:
@@ -17,9 +16,31 @@ def parse_line(line: str) -> Optional[LogRecord]:
     if not line or line.startswith("#"):
         return None
 
-    parts = line.split()
-    if len(parts) != 7:
+    parts = line.split(maxsplit=3)
+    if len(parts) < 4:
         return None
-    date, time, event_type, msg, username, ip, extra_info = parts
-    
-    return LogRecord(date=date, time=time, event_type=event_type, msg=msg, username=username, ip=ip, extra_info=extra_info)
+    date, time, level, rest = parts
+
+    rest_parts = rest.split()
+    event_type = rest_parts[0]
+
+    username = "N/A"
+    ip = "N/A"
+    extra_info_list = []
+
+    for kv in rest_parts[1:]:
+        if "=" in kv:
+            key, value = kv.split("=", 1)
+            if key == "username":
+                username = value
+            elif key == "ip":
+                ip = value
+            else:
+                extra_info_list.append(f"{key} = {value}")
+        else:
+            extra_info_list.append(kv)
+
+    extra_info = " ".join(extra_info_list) if extra_info_list else "N/A"
+
+
+    return LogRecord(date=date, time=time, level=level, event_type=event_type, username=username, ip=ip, extra_info=extra_info)

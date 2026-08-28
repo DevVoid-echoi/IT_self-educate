@@ -18,17 +18,20 @@ def analyze(records: Iterable[LogRecord]) -> dict:
 
     for r in records:
         total += 1
-        ip_count[r.ip] += 1
 
-        if msg == ["CONNECTION_ERROR"]:
+        if r.ip and r.ip != "N/A":
+            ip_count[r.ip] += 1
+
+        event = r.event_type
+        if event == "CONNECTION_ERROR":
             error_count += 1
-        if msg == ["LOGIN_FAILED"]:
+        if event == "LOGIN_FAILED":
             failed_logins_count += 1
-        if msg == ["LOGIN_SUCCESS"]:
+        if event == "LOGIN_SUCCESS":
             successful_logins_count += 1
-        if msg == ["KICK"]:
+        if event == "KICK":
             kicked_users_count += 1
-        if msg == ["BAN"]:
+        if event == "BAN":
             banned_users_count += 1
 
         

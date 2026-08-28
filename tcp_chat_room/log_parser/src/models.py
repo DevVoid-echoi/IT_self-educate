@@ -9,8 +9,8 @@ class LogRecord:
     "Định nghĩa cấu trúc dữ liệu cho một bản ghi log"
     date: str
     time: str 
+    level: str
     event_type: str
-    msg: str
     username: str
     ip: str
     extra_info: str
