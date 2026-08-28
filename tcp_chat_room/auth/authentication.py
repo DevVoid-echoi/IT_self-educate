@@ -6,6 +6,7 @@ import sys
 """Path to base directory(To import config)"""
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USERS_FILE = os.path.join(BASE_DIR, "data", "user.json")
+BAN_FILE = os.path.join(BASE_DIR, "data", "ban.txt")
 
 from auth.password import ADMIN_PASSWORD
 
@@ -18,6 +19,15 @@ def _load_users():
             return json.load(f)
     except Exception:
         return {}
+
+def _load_banned_users() -> set:
+    if not os.path.exists(BAN_FILE):
+        return set()
+    try:
+        with open(BAN_FILE, "r", encoding='utf-8') as f:
+            return {line.strip().lower() for line in f if line.strip()}
+    except Exception:
+        return set()
 
 def _save_users(users):
     """Save accounts into JSON file"""
@@ -68,12 +78,18 @@ def login(username, password):
 
     user_data = users[username]
     if verify_password(user_data["password_hash"], password):
+        banned_users = _load_banned_users()
+        if username in banned_users:
+            print(f"[AUTH LOG] Login failed: User '{username}' is banned.")
+            return False, None  # Chặn không cho đăng nhập
+
         # Create a session object to return when the authentication succeed
         session = {
             "username": username,
             "role": user_data.get("role", "user"),
             "authentication": True
         }
+
         print(f"[AUTH LOG] Login success: User '{username}' logged in successfully.")
         return True, session
     else:
