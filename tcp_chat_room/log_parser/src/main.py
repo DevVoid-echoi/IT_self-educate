@@ -94,7 +94,8 @@ def main() -> int:
     if args.output:
         report = {
             "total_requests": total_requests,
-            "total_ip": ip,
+            "all_ips": all_ips,
+            "unique_ip": unique_ip_count,
             "successful_logins": successful_logins,
             "failed_logins": failed_logins,
             "kicked_users": kicked_users,
