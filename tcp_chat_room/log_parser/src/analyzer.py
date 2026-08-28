@@ -21,6 +21,8 @@ def analyze(records: Iterable[LogRecord]) -> dict:
 
         if r.ip and r.ip != "N/A":
             ip_count[r.ip] += 1
+        
+        all_ips_sorted = ip_count.most_common()
 
         event = r.event_type
         if event == "CONNECTION_ERROR":
@@ -54,6 +56,8 @@ def analyze(records: Iterable[LogRecord]) -> dict:
 
     return{
         "total_requests": total,
+        "all_ips": all_ips_sorted,
+        "unique_ip_count": len(all_ips_sorted),
         "successful_logins": successful_logins_count,
         "failed_logins": failed_logins_count,
         "kicked_users": kicked_users_count,

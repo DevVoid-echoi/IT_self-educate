@@ -4,7 +4,7 @@ from typing import Iterable, Optional
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 import json
-from .models import LogRecord
+from models import LogRecord
 
 def iter_record(log_file: str) -> Iterable[LogRecord]:
     "Đọc từng dòng trong file log và trả về các bản ghi log hợp lệ"

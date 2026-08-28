@@ -4,7 +4,7 @@ from typing import Iterable, Optional
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 import json
-from .models import LogRecord
+from models import LogRecord
 
 
 def analyze(records: Iterable[LogRecord]) -> dict:

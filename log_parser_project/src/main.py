@@ -4,8 +4,13 @@ from typing import Iterable, Optional
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 import json
-from .parser import iter_record
-from .analyzer import analyze
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from parser import iter_record
+from analyzer import analyze
 
 
 def main() -> int:

@@ -32,6 +32,8 @@ def main() -> int:
     results = analyze(iter_record(LOG_PATH))
 
     total_requests = results["total_requests"]
+    all_ips = results["all_ips"]
+    unique_ip_count = results["unique_ip_count"]
     successful_logins = results["successful_logins"]
     failed_logins = results["failed_logins"]
     kicked_users = results["kicked_users"]
@@ -41,38 +43,47 @@ def main() -> int:
     top_5_IPs = results["top_5_IPs"]
 
     print("\n" + "=" * 50)
-    print(f"Target log path: {LOG_PATH}")
     if os.path.exists(LOG_PATH):
         with open(LOG_PATH, "r", encoding="utf-8") as f:
             print("--- LOG CONTENT ---")
             print(f.read())
     else:
         print("Log file does not exist!")
+    print("=" * 50)
     print(f"Total request: {total_requests}")
+    print("=" * 50)
+
+    print(f"\nTotal Unique IPs: {unique_ip_count}")
     print("-" * 50)
+    print(f"{'IP Address':<20} | {'Request Count':<15}")
+    print("-" * 50)
+
+    for ip, count in all_ips:
+        print(f"{ip:<20} | {count:<15}")
+    print("\n"+"=" * 50)
 
     print(f"Successful logins: {successful_logins}")
-    print("-" * 50)
+    print("=" * 50)
 
     print(f"Failed logins: {failed_logins}")
-    print("-" * 50)
+    print("=" * 50)
 
     print(f"Kicked users: {kicked_users}")
-    print("-" * 50)
+    print("=" * 50)
 
     print(f"Banned users: {banned_users}")
-    print("-" * 50)
+    print("=" * 50)
 
     print(f"Error count: {error_count}")
-    print("-" * 50)
+    print("=" * 50)
 
     print(f"Error rate: {error_rate:.2%}")
-    print("-" * 50)
+    print("=" * 50)
 
     print("Top 5 IPs:")
     for ip, count in top_5_IPs:
         print(f"{ip}:{count}")
-    print("-" * 50)
+    print("=" * 50)
 
     """
     print ("Average latency per path (sorted):")
@@ -80,18 +91,17 @@ def main() -> int:
         print(f"{path}: {avg_latency:.2f} ms")
     """
 
-    print("=" * 50)
-
     if args.output:
         report = {
-            "total_requests": total,
-            "successful_logins": successful_logins_count,
-            "failed_logins": failed_logins_count,
-            "kicked_users": kicked_users_count,
-            "banned_users": banned_users_count,
+            "total_requests": total_requests,
+            "total_ip": ip,
+            "successful_logins": successful_logins,
+            "failed_logins": failed_logins,
+            "kicked_users": kicked_users,
+            "banned_users": banned_users,
             "error_count": error_count,
             "error_rate": error_rate,
-            "top_5_IPs": ip_count.most_common(5)
+            "top_5_IPs": top_5_IPs
         }
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=4, ensure_ascii=False)
