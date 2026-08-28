@@ -9,7 +9,7 @@ from analyzer import analyze
 import os
 import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEC_LOG_PATH = os.path.join(BASE_DIR, "logs", "security.log")
 SER_LOG_PATH = os.path.join(BASE_DIR, "logs", "server.log")
 

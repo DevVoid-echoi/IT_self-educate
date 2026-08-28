@@ -81,17 +81,18 @@ def login(username, password):
         banned_users = _load_banned_users()
         if username in banned_users:
             print(f"[AUTH LOG] Login failed: User '{username}' is banned.")
-            return False, None  # Chặn không cho đăng nhập
+            return True, None
 
         # Create a session object to return when the authentication succeed
-        session = {
-            "username": username,
-            "role": user_data.get("role", "user"),
-            "authentication": True
-        }
+        else:
+            session = {
+                "username": username,
+                "role": user_data.get("role", "user"),
+                "authentication": True
+            }
 
-        print(f"[AUTH LOG] Login success: User '{username}' logged in successfully.")
-        return True, session
+            print(f"[AUTH LOG] Login success: User '{username}' logged in successfully.")
+            return True, session
     else:
         print(f"[AUTH LOG] Login failed: Invalid password for user '{username}'.")
         return False, None

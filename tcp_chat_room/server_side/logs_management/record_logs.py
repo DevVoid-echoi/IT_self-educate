@@ -2,12 +2,18 @@ import os
 import sys
 import logging
 from datetime import datetime
+#from security.detection import BruteForceDetector
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
+LOG_PARSER_DIR = os.path.join(BASE_DIR, "log_parser")
 
 SERVER_LOGS_PATH = os.path.join(LOGS_DIR, "server.log")
 SECURITY_LOGS_PATH = os.path.join(LOGS_DIR, "security.log")
+
+MODELS_PATH = os.path.join(LOG_PARSER_DIR, "models")
+
+#from models import LogRecord
 
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -29,6 +35,8 @@ security_logger.setLevel(logging.INFO)
 security_file_handler = logging.FileHandler(SECURITY_LOGS_PATH, encoding='utf-8')
 security_file_handler.setFormatter(formatter)
 security_logger.addHandler(security_file_handler)
+
+#brute_force_detector = BruteForceDetector(max_attempts=5, window_seconds=60)
 
 # --- Log events ---
 def log_event(event_type: str, username: str = "Unknown", ip: str = "N/A", extra_info: str = ""):

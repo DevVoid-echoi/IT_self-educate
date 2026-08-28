@@ -44,9 +44,14 @@ def receive():
                 if len(parts) == 3:
                     _, username, password = parts
                     success, user_session = login(username, password)
-                    if success:
+                    if success and user_session:
                         session = user_session
                         log_event("LOGIN_SUCCESS", username=username, ip=ip_addr)
+                    elif success and not user_session:
+                        client.send("ERR BANNED\n".encode('utf-8'))
+                        log_event("LOGIN_FAILED", username=username, ip=ip_addr, extra_info="reason=BANNED")
+                        client.close()
+                        continue
                     else:
                         client.send("ERR WRONG_AUTH\n".encode("utf-8")) # Decline due to wrong information
                         log_event("LOGIN_FAILED", username=username, ip=ip_addr)

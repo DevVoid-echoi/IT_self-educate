@@ -43,7 +43,7 @@ def main():
                 break
 
             else: # Show any login error
-                print(f">> Lỗi đăng nhập: {line}")
+                print(f">> Login error: {line}")
 
         """Send REGISTER request and check received message to see if user successfully registered"""
         if choice == "2":
