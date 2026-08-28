@@ -1,112 +1,108 @@
-Dưới đây là toàn bộ mã nguồn Markdown hoàn chỉnh cho file **`README.md`**. Bạn chỉ cần sao chép toàn bộ nội dung trong khung bên dưới và dán trực tiếp vào file `README.md` ở thư mục gốc của dự án.
-
-```markdown
+Markdown
 # Multi-Threaded TCP Chat System with RBAC & Security Logging
 
-Một hệ thống Chat Client-Server đa luồng (Multi-Threaded) xây dựng trên nền tảng Python Pure-Socket. Dự án tập trung vào kiến trúc bảo mật với cơ chế xác thực người dùng (Authentication), phân quyền truy cập theo vai trò (Role-Based Access Control - RBAC), quản trị hệ thống trực tiếp qua Server Console và ghi nhận nhật ký an ninh (Security Logging) theo chuẩn production.
+A multi-threaded Client-Server chat system built using Python Pure-Sockets. The project focuses on a security-centric architecture featuring user authentication, Role-Based Access Control (RBAC), real-time administrative management via Server Console, production-ready security logging, and an integrated log parsing module for security analysis.
 
 ---
 
-## 🌟 Tính năng nổi bật
+## 🌟 Key Features
 
-* **Multi-Threaded Architecture**: Xử lý đồng thời nhiều Client kết nối sử dụng `socket` và `threading` với cơ chế khóa bất đồng bộ (`state_lock`) an toàn.
-* **Authentication & Session Management**: Đăng ký, đăng nhập với mật khẩu được mã hóa Hash (Bcrypt/SHA-256) và quản lý phiên làm việc (`user_sessions`).
-* **Role-Based Access Control (RBAC)**: Phân quyền thực thi câu lệnh (`/kick`, `/ban`, `/unban`) linh hoạt theo danh mục vai trò (`admin`, `moderator`, `user`).
-* **Server Console Control**: Cho phép Administrator cấp quyền linh hoạt (`/set <username> <role>`) trực tiếp từ Terminal Server theo thời gian thực.
-* **Real-time Session Synchronization**: Tự động đồng bộ quyền hạn mới từ file lưu trữ (`user.json`) tới RAM Session của Client đang online mà không cần tái kết nối.
-* **Security & System Logging**: Tách biệt luồng ghi log vận hành (`server.log`) và log an ninh (`security.log`) tự động ép ghi xuống đĩa (`flush`). Không lưu trữ password dưới dạng plain-text.
+* **Multi-Threaded Architecture**: Handles concurrent client connections using `socket` and `threading` with thread-safe synchronization locks (`state_lock`).
+* **Authentication & Session Management**: Secure user registration and login with password hashing (Bcrypt/SHA-256) and active session management (`user_sessions`).
+* **Role-Based Access Control (RBAC)**: Flexible command execution rights (`/kick`, `/ban`, `/unban`) governed by user roles (`admin`, `moderator`, `user`).
+* **Server Console Control**: Allows administrators to dynamically assign roles (`/set <username> <role>`) directly from the server terminal in real time.
+* **Real-time Session Synchronization**: Automatically syncs role updates from persistent storage (`user.json`) directly to active client RAM sessions without requiring a reconnect.
+* **Security & System Logging**: Separates operational logs (`server.log`) and security audit logs (`security.log`) with automatic disk flushing (`flush`). Passwords are never stored in plain-text.
+* **Log Parser & Analytics Engine**: Includes a generator-based (`yield`) stream parser and analytics engine (`log_parser`) to parse security events, track failed login attempts, calculate error rates, and identify top requesting IP addresses.
 
 ---
 
-## 📁 Cấu trúc dự án
+## 📁 Project Structure
 
 ```text
 tcp_chat_room/
 ├── auth/
-│   ├── authentication.py    # Xử lý login, register, hash password, set_user_role
-│   ├── password.py          # Hàm mã hóa & kiểm tra mật khẩu
-│   └── rbac.py              # Định nghĩa Roles & Permissions (ADMIN, MODERATOR, USER)
+│   ├── authentication.py    # Handles login, registration, password hashing, set_user_role
+│   ├── password.py          # Password hashing and verification utilities
+│   └── rbac.py              # Role & Permission definitions (ADMIN, MODERATOR, USER)
 ├── client_side/
-│   ├── client_management/
-    │    ├──    connection.py        # Quản lý kết nối TCP phía Client
-│   │   └── instruction.py       # Hiển thị hướng dẫn lệnh động theo Role người dùng
-│   └──    client.py            # Khởi chạy Client chat
-│
+│   ├── client_management/    
+│   │   ├── connection.py    # Client-side TCP socket connection management
+│   │   └── instruction.py   # Dynamic command line instructions based on user role
+│   └── client.py            # Client entry point
 ├── data/
-│   ├── ban.txt              # Cơ sở dữ liệu danh sách tài khoản bị cấm (Banned)
-│   └── user.json            # Cơ sở dữ liệu tài khoản & quyền hạn RBAC
+│   ├── ban.txt              # Database for banned user accounts
+│   └── user.json            # Database for user credentials & RBAC roles
+├── log_parser/              # Security Log Parsing & Analytics Module
+│   └── src/
+│       ├── analyzer.py      # Aggregates log metrics (failed logins, error rates, top IPs)
+│       ├── main.py          # Entry point for running log analysis reports
+│       ├── models.py        # LogRecord dataclass definition
+│       └── parser.py        # Stream-based log parser using generator-based yield
 ├── logs/
-│   ├── security.log         # Log đăng nhập, vi phạm quyền, lệnh KICK/BAN/UNBAN
-│   └── server.log           # Log kết nối, ngắt kết nối và luồng vận hành hệ thống
+│   ├── security.log         # Security events: logins, permission violations, KICK/BAN/UNBAN
+│   └── server.log           # Operational logs: connections, disconnections, system events
 ├── server_side/
 │   ├── client_management/
-│   │   ├── actions.py       # Điều hướng tin nhắn, xử lý lệnh KICK, BAN, UNBAN
-│   │   ├── ban_handler.py   # Module đọc/ghi danh sách người dùng bị cấm
-│   │   └── lock.py          # Lock quản lý bất đồng bộ tránh race condition (state_lock)
+│   │   ├── actions.py       # Message routing and command execution (KICK, BAN, UNBAN)
+│   │   ├── ban_handler.py   # Reads and writes banned user lists
+│   │   └── lock.py          # Thread lock preventing race conditions (state_lock)
 │   ├── logs_management/
-│   │   └── record_logs.py   # Module khởi tạo và ghi log chuẩn logging
-│   └── server.py            # Entry point khởi chạy TCP Server & Console Thread
-├── config.py                # Cấu hình tham số PORT, HOST và đường dẫn dữ liệu
-└── README.md                # Tài liệu hướng dẫn dự án
+│   │   └── record_logs.py   # Log initialization and recording module
+│   └── server.py            # Main entry point for TCP Server & Console Thread
+├── config.py                # Configuration parameters: PORT, HOST, and file paths
+└── README.md                # Project documentation
+🛠️ Commands & Syntax
+1. Server Console (Executed directly from the Server Terminal)
+/set <username> <role>: Assigns a new role to a user (admin, moderator, user).
 
-```
+2. Client Chat Room
+/quit or /exit: Disconnects and exits the chat room.
 
----
+/kick <username>: Removes a user from the chat room (Requires KICK permission).
 
-## 🛠️ Danh mục lệnh & Cú pháp
+/ban <username>: Permanently bans a user from joining (Requires BAN permission).
 
-### 1. Phía Server Console (Nhập tại Terminal máy chủ)
+/unban <username>: Lifts a ban for a specified user (Requires UNBAN permission).
 
-* `/set <username> <role>`: Gán role mới cho người dùng (`admin`, `moderator`, `user`).
+🚀 Getting Started
+Prerequisites
+Python 3.10+ (Built using Python standard libraries; no external package dependencies required).
 
-### 2. Phía Client Chat Room
+Step 1: Launch the Server
+Open a terminal in the project root directory (tcp_chat_room):
 
-* `/quit` hoặc `/exit`: Rời khỏi phòng chat.
-* `/kick <username>`: Đẩy người dùng ra khỏi phòng chat *(Yêu cầu quyền KICK)*.
-* `/ban <username>`: Cấm người dùng tham gia phòng chat vĩnh viễn *(Yêu cầu quyền BAN)*.
-* `/unban <username>`: Bỏ cấm người dùng khỏi hệ thống *(Yêu cầu quyền UNBAN)*.
-
----
-
-## 🚀 Hướng dẫn khởi chạy
-
-### Yêu cầu môi trường
-
-* **Python 3.10+** (Chạy trên các thư viện chuẩn của Python, không cần cài đặt package bên ngoài).
-
-### Bước 1: Khởi chạy Server
-
-Mở Terminal tại thư mục gốc `tcp_chat_room`:
-
-```bash
+Bash
 python3 server_side/server.py
+Step 2: Launch the Client
+Open another terminal window and run:
 
-```
-
-### Bước 2: Khởi chạy Client
-
-Mở một cửa sổ Terminal khác và thực hiện:
-
-```bash
+Bash
 python3 client_side/client.py
+Step 3: Run Security Log Analysis
+To parse and generate a statistical report from logs/security.log, execute:
 
-```
-
----
-
-## 📝 Định dạng Security Log (`logs/security.log`)
-
-Toàn bộ các sự kiện liên quan đến an ninh và xác thực đều được tự động lưu trữ dưới định dạng chuẩn:
-
-```text
+Bash
+python3 log_parser/src/main.py logs/security.log
+📝 Security Log & Parser Output Format
+1. Log Event Format (logs/security.log)
+Plaintext
 2026-08-27 15:00:10 INFO USER_CONNECTED username=N/A ip=127.0.0.1
 2026-08-27 15:00:15 INFO LOGIN_SUCCESS username=alice ip=127.0.0.1
 2026-08-27 15:00:22 WARNING LOGIN_FAILED username=bob ip=127.0.0.1
 2026-08-27 15:01:05 WARNING KICK username=spammer by=admin
 2026-08-27 15:01:10 WARNING BAN username=spammer by=admin
-
-```
-
-```
-
-```
+2. Log Parser Analytics Report (log_parser)
+JSON
+{
+  "total_requests": 5,
+  "successful_logins": 1,
+  "failed_logins": 1,
+  "kicked_users": 1,
+  "banned_users": 1,
+  "error_count": 0,
+  "error_rate": 0.0,
+  "top_5_IPs": [
+    ["127.0.0.1", 2]
+  ]
+}
