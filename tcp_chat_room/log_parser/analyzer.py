@@ -9,6 +9,7 @@ def analyze(records: Iterable[LogRecord]) -> dict:
     "Phân tích các bản ghi log và trả về thống kê"
     total = 0
     error_count = 0
+    warning_count = 0
     failed_logins_count = 0
     successful_logins_count = 0
     banned_users_count = 0
@@ -23,6 +24,10 @@ def analyze(records: Iterable[LogRecord]) -> dict:
             ip_count[r.ip] += 1
         
         all_ips_sorted = ip_count.most_common()
+
+        level = r.level
+        if level == "WARNING":
+            warning_count += 1
 
         event = r.event_type
         if event == "CONNECTION_ERROR":
@@ -64,5 +69,6 @@ def analyze(records: Iterable[LogRecord]) -> dict:
         "banned_users": banned_users_count,
         "error_count": error_count,
         "error_rate": error_rate,
+        "warning": warning_count,
         "top_5_IPs": ip_count.most_common(5)
     }

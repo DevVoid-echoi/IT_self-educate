@@ -3,6 +3,7 @@ import argparse
 from typing import Iterable, Optional
 from collections import defaultdict, Counter
 from dataclasses import dataclass
+from datetime import datetime
 import json
 from parser import iter_record
 from analyzer import analyze
@@ -20,6 +21,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Analyze a log file")
     parser.add_argument("-f", "--file",
                         choices=["security", "server"],
+                        default = "security",
                         help="Path to the security/server/both log file"
                         )
     parser.add_argument("-o", "--output", help="Path to the output file (optional)")
@@ -42,6 +44,7 @@ def main() -> int:
     banned_users = results["banned_users"]
     error_count = results["error_count"]
     error_rate = results["error_rate"]
+    warning = results["warning"]
     top_5_IPs = results["top_5_IPs"]
 
     print("\n" + "=" * 50)
@@ -82,10 +85,19 @@ def main() -> int:
     print(f"Error rate: {error_rate:.2%}")
     print("=" * 50)
 
+    print(f"Warning: {warning}")
+    print("=" * 50)
+
     print("Top 5 IPs:")
     for ip, count in top_5_IPs:
         print(f"{ip}:{count}")
     print("=" * 50)
+
+    if warning > 0:
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print("\033[91m" + "=" * 50)
+        print(f"[{now_str}] [ALERT] Security warnings/brute-force events detected ({warning} total)!")
+        print("=" * 50 + "\033[0m")
 
     """
     print ("Average latency per path (sorted):")
@@ -104,11 +116,14 @@ def main() -> int:
             "banned_users": banned_users,
             "error_count": error_count,
             "error_rate": error_rate,
-            "top_5_IPs": top_5_IPs
+            "warning": warning,
+            "top_5_IPs": top_5_IPs,
+            "brute_force_alert": warning > 0
         }
+
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=4, ensure_ascii=False)
-            print(f"[+] Kết quả đã được lưu vào file: {args.output}")
+            print(f"[+] Report saved successfully to: {args.output}")
 
     return 0
 
